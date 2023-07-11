@@ -48,13 +48,8 @@ const getUserWithId = function (id) {
  * @param {{name: string, password: string, email: string}} user
  * @return {Promise<{}>} A promise to the user.
  */
-// const addUser = function (user) {
-//   const userId = Object.keys(users).length + 1;
-//   user.id = userId;
-//   users[userId] = user;
-//   return Promise.resolve(user);
-// };
-const addUser = function (user) {
+
+const addUser = function(user) {
   return pool
     .query(
       "INSERT INTO users (name, email, password) VALUES ($1, $2, $3) RETURNING  *;",
@@ -73,7 +68,7 @@ const addUser = function (user) {
  * @param {string} guest_id The id of the user.
  * @return {Promise<[{}]>} A promise to the reservations.
  */
-const getAllReservations = function (guestId, limit = 10) {
+const getAllReservations = function(guestId, limit = 10) {
   const queryString = `
   SELECT reservations.*, properties.*, AVG(rating) as average_rating 
   FROM reservations 
@@ -101,28 +96,17 @@ const getAllReservations = function (guestId, limit = 10) {
  * @return {Promise<[{}]>}  A promise to the properties.
  */
 
-// const getAllProperties = (options, limit = 10) => {
-//   return pool
-//     .query(`SELECT * FROM properties LIMIT $1`, [limit])
-//     .then((result) => {
-//       return result.rows;
-//     })
-//     .catch((err) => {
-//       console.log(err.message);
-//     });
-// };
+const getAllProperties = function(options, limit = 10) {
 
-const getAllProperties = function (options, limit = 10) {
-  // 1
   const queryParams = [];
-  // 2
+
   let queryString = `
   SELECT properties.*, avg(property_reviews.rating) as average_rating
   FROM properties
   JOIN property_reviews ON properties.id = property_id
   `;
 
-  // 3
+
   if (options.city) {
     queryParams.push(`%${options.city}%`);
     queryString += `WHERE city LIKE $${queryParams.length} `;
@@ -162,7 +146,7 @@ const getAllProperties = function (options, limit = 10) {
       queryString += `WHERE property_reviews.rating >= $${queryParams.length} `;
     }
   }
-  // 4
+
   queryParams.push(limit);
   queryString += `
   GROUP BY properties.id
@@ -170,10 +154,8 @@ const getAllProperties = function (options, limit = 10) {
   LIMIT $${queryParams.length};
   `;
 
-  // 5
   console.log(queryString, queryParams);
 
-  // 6
   return pool
     .query(queryString, queryParams)
     .then((result) => {
