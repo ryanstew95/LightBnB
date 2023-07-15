@@ -76,15 +76,6 @@ const getAllProperties = function(options, limit = 10) {
   GROUP BY properties.id
   `;
 
-  // let queryString = `
-  // SELECT properties.id, title, cost_per_night, AVG(property_reviews.rating) AS average_rating
-  // FROM properties
-  // LEFT JOIN property_reviews ON properties.id = property_reviews.property_id
-  // GROUP BY properties.id
-  // HAVING AVG(property_reviews.rating) >= 4
-  // `;
-
-
   if (options.city) {
     queryParams.push(`%${options.city}%`);
     queryString += `WHERE city LIKE $${queryParams.length} `;
@@ -130,17 +121,12 @@ const getAllProperties = function(options, limit = 10) {
   ORDER BY cost_per_night
   `;
 
-  console.log(queryString, queryParams);
-
   return pool
     .query(queryString)
     .then((result) => {
-      console.log('result:', result);
       return result.rows;
     })
-    .catch((err) => {
-      console.log(err);
-    });
+    .catch((err) => {});
 };
 
 const addProperty = function (property) {
