@@ -70,9 +70,11 @@ const getAllProperties = function(options, limit = 10) {
   const queryParams = [];
 
   let queryString = `
-  SELECT properties.*, avg(property_reviews.rating) as average_rating
+  SELECT properties.id, title, cost_per_night, AVG(property_reviews.rating) AS average_rating
   FROM properties
-  JOIN property_reviews ON properties.id = property_id
+  LEFT JOIN property_reviews ON properties.id = property_reviews.property_id
+  GROUP BY properties.id
+  HAVING AVG(property_reviews.rating) >= 4;  
   `;
 
 
