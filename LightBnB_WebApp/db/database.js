@@ -7,16 +7,7 @@ const pool = new Pool({
   database: "lightbnb",
 });
 
-// test connection to database
-pool.query(`SELECT title FROM properties LIMIT 10;`).then((response) => {});
-
 /// Users
-
-/**
- * Get a single user from the database given their email.
- * @param {String} email The email of the user.
- * @return {Promise<{}>} A promise to the user.
- */
 
 const getUserWithEmail = function (email) {
   return pool
@@ -30,11 +21,6 @@ const getUserWithEmail = function (email) {
     });
 };
 
-/**
- * Get a single user from the database given their id.
- * @param {string} id The id of the user.
- * @return {Promise<{}>} A promise to the user.
- */
 const getUserWithId = function (id) {
   return pool
     .query("SELECT * FROM users WHERE id = $1", [id])
@@ -43,11 +29,6 @@ const getUserWithId = function (id) {
     })
     .catch((err) => console.log(err));
 };
-/**
- * Add a new user to the database.
- * @param {{name: string, password: string, email: string}} user
- * @return {Promise<{}>} A promise to the user.
- */
 
 const addUser = function(user) {
   return pool
@@ -63,11 +44,6 @@ const addUser = function(user) {
 
 /// Reservations
 
-/**
- * Get all reservations for a single user.
- * @param {string} guest_id The id of the user.
- * @return {Promise<[{}]>} A promise to the reservations.
- */
 const getAllReservations = function(guestId, limit = 10) {
   const queryString = `
   SELECT reservations.*, properties.*, AVG(rating) as average_rating 
@@ -88,13 +64,6 @@ const getAllReservations = function(guestId, limit = 10) {
 };
 
 /// Properties
-
-/**
- * Get all properties.
- * @param {{}} options An object containing query options.
- * @param {*} limit The number of results to return.
- * @return {Promise<[{}]>}  A promise to the properties.
- */
 
 const getAllProperties = function(options, limit = 10) {
 
@@ -164,11 +133,6 @@ const getAllProperties = function(options, limit = 10) {
     .catch((err) => {});
 };
 
-/**
- * Add a property to the database
- * @param {{}} property An object containing all of the property details.
- * @return {Promise<{}>} A promise to the property.
- */
 const addProperty = function (property) {
   const queryParams = [
     property.owner_id,
