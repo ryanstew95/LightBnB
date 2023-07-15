@@ -30,7 +30,7 @@ To use the project, you need to set up the database by following these steps:
 
 -`\c lightbnb;`
 
-These commands create a new database named “lighting” and connect to it.
+These commands create a new database named “lightbnb” and connect to it.
 
 -Copy and paste all the contents of the 01_schema.sql file (found in the migrations folder) into the terminal 
 
