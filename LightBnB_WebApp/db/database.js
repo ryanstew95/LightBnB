@@ -160,7 +160,7 @@ const addProperty = function (property) {
       description,
       thumbnail_photo_url,
       cover_photo_url,
-      cost_per_night,
+      cost_per_night * 100,
       street,
       city,
       province,
