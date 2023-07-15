@@ -70,12 +70,19 @@ const getAllProperties = function(options, limit = 10) {
   const queryParams = [];
 
   let queryString = `
-  SELECT properties.id, title, cost_per_night, AVG(property_reviews.rating) AS average_rating
+  SELECT properties.*, avg(property_reviews.rating) as average_rating
   FROM properties
-  LEFT JOIN property_reviews ON properties.id = property_reviews.property_id
+  JOIN property_reviews ON properties.id = property_id
   GROUP BY properties.id
-  HAVING AVG(property_reviews.rating) >= 4;  
   `;
+
+  // let queryString = `
+  // SELECT properties.id, title, cost_per_night, AVG(property_reviews.rating) AS average_rating
+  // FROM properties
+  // LEFT JOIN property_reviews ON properties.id = property_reviews.property_id
+  // GROUP BY properties.id
+  // HAVING AVG(property_reviews.rating) >= 4
+  // `;
 
 
   if (options.city) {
@@ -120,19 +127,20 @@ const getAllProperties = function(options, limit = 10) {
 
   queryParams.push(limit);
   queryString += `
-  GROUP BY properties.id
   ORDER BY cost_per_night
-  LIMIT $${queryParams.length};
   `;
 
   console.log(queryString, queryParams);
 
   return pool
-    .query(queryString, queryParams)
+    .query(queryString)
     .then((result) => {
+      console.log('result:', result);
       return result.rows;
     })
-    .catch((err) => {});
+    .catch((err) => {
+      console.log(err);
+    });
 };
 
 const addProperty = function (property) {
