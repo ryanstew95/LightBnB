@@ -16,15 +16,19 @@ const pool = new Pool({
  */
 
 const getUserWithEmail = function (email) {
-  return pool
+  const promise = pool
     .query("SELECT * FROM users WHERE email = $1", [email])
     .then((result) => {
+      if (!result.rows.length) {
+        return (null);
+      }
       return result.rows[0];
     })
     .catch((err) => {
       console.error(err);
       throw err;
     });
+  return promise;
 };
 
 /**
@@ -96,69 +100,62 @@ const getAllReservations = function(guestId, limit = 10) {
  * @return {Promise<[{}]>}  A promise to the properties.
  */
 
-const getAllProperties = function(options, limit = 10) {
-
+const getAllProperties = function (options, limit = 10) {
   const queryParams = [];
-
   let queryString = `
-  SELECT properties.*, avg(property_reviews.rating) as average_rating
-  FROM properties
-  JOIN property_reviews ON properties.id = property_id
-  GROUP BY properties.id
+    SELECT properties.*, avg(property_reviews.rating) as average_rating
+    FROM properties
+    JOIN property_reviews ON properties.id = property_id
   `;
+
+  const whereClauses = [];
 
   if (options.city) {
     queryParams.push(`%${options.city}%`);
-    queryString += `WHERE city LIKE $${queryParams.length} `;
+    whereClauses.push(`city LIKE $${queryParams.length}`);
   }
+
   if (options.owner_id) {
     queryParams.push(options.owner_id);
-    if (queryParams.length > 0) {
-      queryString += `AND properties.owner_id = $${queryParams.length} `;
-    } else {
-      queryString += `WHERE properties.owner_id = $${queryParams.length} `;
-    }
+    whereClauses.push(`owner_id = $${queryParams.length}`);
   }
 
   if (options.minimum_price_per_night) {
     queryParams.push(options.minimum_price_per_night * 100);
-    if (queryParams.length > 0) {
-      queryString += `AND cost_per_night >= $${queryParams.length} `;
-    } else {
-      queryString += `WHERE cost_per_night >= $${queryParams.length} `;
-    }
+    whereClauses.push(`cost_per_night >= $${queryParams.length}`);
   }
 
   if (options.maximum_price_per_night) {
     queryParams.push(options.maximum_price_per_night * 100);
-    if (queryParams.length > 0) {
-      queryString += `AND cost_per_night <= $${queryParams.length} `;
-    } else {
-      queryString += `WHERE cost_per_night <= $${queryParams.length} `;
-    }
+    whereClauses.push(`cost_per_night <= $${queryParams.length}`);
   }
 
   if (options.minimum_rating) {
     queryParams.push(options.minimum_rating);
-    if (queryParams.length > 0) {
-      queryString += `AND property_reviews.rating >= $${queryParams.length} `;
-    } else {
-      queryString += `WHERE property_reviews.rating >= $${queryParams.length} `;
-    }
+    whereClauses.push(`
+      properties.id IN (
+        SELECT property_id
+        FROM property_reviews
+        GROUP BY property_id
+        HAVING avg(rating) >= $${queryParams.length}
+      )
+    `);
+  }
+
+  if (whereClauses.length > 0) {
+    queryString += " WHERE " + whereClauses.join(" AND ");
   }
 
   queryParams.push(limit);
   queryString += `
-  ORDER BY cost_per_night
+    GROUP BY properties.id
+    ORDER BY cost_per_night
+    LIMIT $${queryParams.length};
   `;
 
-  return pool
-    .query(queryString)
-    .then((result) => {
-      return result.rows;
-    })
-    .catch((err) => {});
+  return pool.query(queryString, queryParams).then((res) => res.rows);
 };
+
 
 /**
  * Add a property to the database
@@ -173,7 +170,7 @@ const addProperty = function (property) {
     property.description,
     property.thumbnail_photo_url,
     property.cover_photo_url,
-    property.cost_per_night,
+    property.cost_per_night * 100,
     property.street,
     property.city,
     property.province,
@@ -191,7 +188,7 @@ const addProperty = function (property) {
       description,
       thumbnail_photo_url,
       cover_photo_url,
-      cost_per_night * 100,
+      cost_per_night,
       street,
       city,
       province,
@@ -210,7 +207,6 @@ const addProperty = function (property) {
   return pool.query(queryString, queryParams)
     .then((result) => result.rows[0]);
 };
-
 
 module.exports = {
   getUserWithEmail,
